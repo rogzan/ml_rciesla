@@ -1,0 +1,710 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "9103bae3-f575-46bf-b834-9455633b0ec2",
+   "metadata": {
+    "tags": []
+   },
+   "source": [
+    "# Classification"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "5f18ceb3-ff75-4533-bc48-2d21ed1a1624",
+   "metadata": {},
+   "source": [
+    "Roksana Cieśla"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "74defa98-efea-45ec-b7ba-731ea5788e95",
+   "metadata": {},
+   "source": [
+    "## Ex. 1 - kNN - own implementation"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 39,
+   "id": "95be1293-7cdd-40be-9416-82b4e04d8370",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn import datasets\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "from scipy.spatial import distance\n",
+    "from sklearn.metrics import accuracy_score\n",
+    "from sklearn.datasets import load_iris\n",
+    "import numpy as np\n",
+    "import pandas as pd"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 40,
+   "id": "c97bcd5c-5cde-46c4-b052-9d5c454e35bc",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "dict_keys(['data', 'target', 'frame', 'target_names', 'DESCR', 'feature_names', 'filename', 'data_module'])\n",
+      "(150, 4)\n"
+     ]
+    }
+   ],
+   "source": [
+    "iris = load_iris()\n",
+    "print(iris.keys())\n",
+    "print(iris.data.shape)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "62a594e6-1dab-487a-8f28-a54304b8f062",
+   "metadata": {},
+   "source": [
+    "1. Iris database - please divide into training and test sets"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 41,
+   "id": "41b40471-a64d-4b24-8445-80838359d98d",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "features_train, features_test, labels_train, labels_test = train_test_split(iris.data, iris.target, test_size=0.3)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "670ca6d6-7249-4333-b0df-e11378d16e10",
+   "metadata": {},
+   "source": [
+    "2. Find the best value of k for the selected test set "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 42,
+   "id": "008b9896-1826-4c38-83c2-90cf6d8c1796",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def most_frequent(knn):\n",
+    "    unique, counts = np.unique(knn, return_counts = True)\n",
+    "    return unique[np.argmax(counts)]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 49,
+   "id": "9a0da576-88c7-4584-adab-4603ae71a7bc",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.9777777777777777"
+      ]
+     },
+     "execution_count": 49,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "k = 4\n",
+    "\n",
+    "predictions = []\n",
+    "for sample in features_test:\n",
+    "    neighbors = np.zeros((features_train.shape[0], 2), dtype = float)\n",
+    "    neighbors[:,1] = labels_train\n",
+    "\n",
+    "    for idx, known_sample in enumerate(features_train):\n",
+    "        neighbors[idx, 0] = distance.euclidean(sample, known_sample)\n",
+    "\n",
+    "    neighbors = neighbors[np.argsort(neighbors[:,0])]\n",
+    "    knn = neighbors[0:k, 1]\n",
+    "    predictions.append(most_frequent(knn))    \n",
+    "\n",
+    "accuracy = accuracy_score(labels_test, predictions)\n",
+    "accuracy"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "152984e7-a645-4404-b333-b8dae6be09c4",
+   "metadata": {},
+   "source": [
+    "## Ex. 2 - kNN - Python (sklearn)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 53,
+   "id": "4f7c695a-8630-466c-814d-5d60068e9ba2",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.neighbors import KNeighborsClassifier"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 54,
+   "id": "3e9d8422-8210-4fbc-a70a-a1d42aca1349",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.9777777777777777"
+      ]
+     },
+     "execution_count": 54,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "iris = datasets.load_iris()\n",
+    "features_train, features_test, labels_train, labels_test = train_test_split(iris.data, iris.target, test_size=0.3)\n",
+    "\n",
+    "k = 4 \n",
+    "\n",
+    "classifier = KNeighborsClassifier(k)\n",
+    "classifier.fit(features_train, labels_train)\n",
+    "accuracy = classifier.score(features_test, labels_test)\n",
+    "accuracy"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "224459ff-d053-4d88-993f-b02966a12c9a",
+   "metadata": {},
+   "source": [
+    "## Ex.3 - Decision trees"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 180,
+   "id": "1a724a29-8521-4ae4-83ae-3766587de117",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn import tree\n",
+    "from six import StringIO \n",
+    "import pydot \n",
+    "from sklearn.tree import DecisionTreeClassifier"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 181,
+   "id": "ab62c2d3-7407-4811-a3c4-6ec84a5e1675",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "iris = load_iris()\n",
+    "clf = tree.DecisionTreeClassifier().fit(iris.data, iris.target)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 182,
+   "id": "5fa08288-f360-4860-856d-305b3164baa7",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([0])"
+      ]
+     },
+     "execution_count": 182,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "clf.predict(iris.data[:1, :])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 183,
+   "id": "bbaac3d7-ad57-465b-aab5-8735650a488b",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([[1., 0., 0.]])"
+      ]
+     },
+     "execution_count": 183,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "clf.predict_proba(iris.data[:1, :])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 184,
+   "id": "2dc8e048-9005-4d7a-acdc-f33476b9cb27",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "True"
+      ]
+     },
+     "execution_count": 184,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "dot_data = StringIO() \n",
+    "tree.export_graphviz(clf, out_file=dot_data) \n",
+    "graph = pydot.graph_from_dot_data(dot_data.getvalue()) \n",
+    "graph[0].write(\"iris.pdf\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "cc383c60-67d7-48e7-912d-10a00e6b7c5e",
+   "metadata": {},
+   "source": [
+    "## Exercise MNIST"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 185,
+   "id": "802b6250-f1eb-4d80-b47b-f1fe6faf86da",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import matplotlib.pyplot as plt\n",
+    "import numpy as np\n",
+    "from sklearn.metrics import classification_report, confusion_matrix, f1_score\n",
+    "from sklearn import tree\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "from scipy.io import loadmat"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 146,
+   "id": "1bcbe6f1-d363-42ca-8d3b-074c6890e650",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# wczytywanie danych\n",
+    "dane = loadmat('mnist.mat')\n",
+    " \n",
+    "#Ex.1.Divide the data into parameters X and answer y:\n",
+    " \n",
+    "X = dane[\"trainX\"]\n",
+    "y = dane[\"trainY\"]\n",
+    " \n",
+    "# Standardization\n",
+    "for i in range(X.shape[0]):\n",
+    "    X[i,:] = X[i,:]/np.std(X[i,:])\n",
+    " \n",
+    "# Convert digit 10 -> 0 (error in the dataset)    \n",
+    "y[np.where(y==10)]=0\n",
+    " \n",
+    "# the height and width of the picture with the number\n",
+    "h = 28\n",
+    "w = 28"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 147,
+   "id": "979d9650-81c0-4ec3-aaa2-ac8aaf42ac92",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(60000, 784)"
+      ]
+     },
+     "execution_count": 147,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Ex 2. Please display the number of digits and the number of pixels per image\n",
+    "\n",
+    "digits, pixels = X.shape\n",
+    "digits, pixels"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 153,
+   "id": "b347584b-e0bd-4a28-8cc0-a351ea0a3bc9",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(60000, 1)"
+      ]
+     },
+     "execution_count": 153,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y.T\n",
+    "y.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 154,
+   "id": "5cd6452a-011f-48b4-9e58-004d732434f6",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def plot_mnist(images, titles, h, w, n_row=3, n_col=4):\n",
+    "    plt.figure(figsize=(1.8 * n_col, 2.4 * n_row))\n",
+    "    plt.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.05)\n",
+    "    for i in range(n_row * n_col):\n",
+    "        plt.subplot(n_row, n_col, i + 1)\n",
+    "        plt.imshow(images[i].reshape((h, w)), cmap=plt.cm.gray)\n",
+    "        plt.title(titles[i], size=12)\n",
+    "        plt.xticks(())\n",
+    "        plt.yticks(())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3edcad83-cda4-47b9-a914-41e99e443ac0",
+   "metadata": {},
+   "source": [
+    "<b>Ex. 3.</b> Please display sample digits from the dataset (functionplot_mnist)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 155,
+   "id": "c3153b68-fe0a-4244-b075-939d104c745b",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "image/png": "iVBORw0KGgoAAAANSUhEUgAAAJAAAACgCAYAAADjPOUVAAAAOXRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjUuMSwgaHR0cHM6Ly9tYXRwbG90bGliLm9yZy/YYfK9AAAACXBIWXMAAAsTAAALEwEAmpwYAAAEL0lEQVR4nO3dvWoUYRiG4eeVoAgx4BHY2Aka9ATEI0iTlILaiidgKfZibyFYJVVOQDyBEAh4APYWCUYhgr42G0hmx91v59nJ/Ox9NSGT3WRCbr68zM9uZKaApq51vQMYNgKChYBgISBYCAgWAoKFgGAhoAsiIiPiZ0S8LXz8i4g4nTzvbtv710cENO1BZr4+/yQiNiPiICJ+TT5unn8tMz9k5none9kTBDRDRFyXtC/pk6Tbkj5K2p9shwhonseS1iS9y8yzzHwvKSQ96XSveoSAZrsn6SgvnzA8mmyHCGiedUknlW0nkm51sC+9RECznUraqGzbkPSjg33pJQKa7auk+xERF7bdn2yHCGieL5L+SHoVETci4uVk++fudqlfCGiGzPwtaUvSU0nHkp5L2ppshwio6kzSQUS8Od+QmYeZ+Sgzb2bmw8w8PP9aRDyLiOPJ8/5e/e52L7ikFQ5WIFgICJa1RR4cEfy/W2GZGdVtrECwEBAsBAQLAcFCQLAQECwEBAsBwUJAsBAQLAQECwHBQkCwEBAsBAQLAcGy0AVlmG97e3tq2+7u7qXPd3Z2ph6zt7fX2j61iRUIFgKChYBgISBYFrqxkLsyplUH5LohukR1iK4btLvGXRlYOgKChYBg4UDiAqrzjlQ285QcJGw6O3WNFQgWAoKFgGAhIFgYov+j6cBcom6orn7vugO8fTyLzwoECwHBQkCwEBAsKzlEl1x22ubPqxt8q9uGcmSaFQgWAoKFgGBhBlpAyexSN0tVH1PyfeoOJNbtNwcSMWgEBAsBwUJAsKzEEN3k1pu64bTkVps+njFvEysQLAQECwHBMrpbm0tOlJbMJCUH+9pU+nepzlxt7iO3NmPpCAgWAoKFgGAZ/IHEkoOEQ3jtnaZKrnZsEysQLAQECwHBMvgZqOTE6Jhmnr5hBYKFgGAhIFgICJZBDdEltx+P+eq/PmIFgoWAYCEgWAgIlkEN0SVWbYju+vdlBYKFgGAhIFh6OwPVnWUvudqw65mgqaa3W3f9+7ICwUJAsBAQLAQES2+H6DFrev9+Hy/NZQWChYBgISBYBj8DdX0grUR15il5MfI+zjt1WIFgISBYCAgWAoJl8EN016+PU/35JVcRjOnFyFmBYCEgWAgIlsHPQFVN39WvZJYpeV7JSdChzjt1WIFgISBYCAgWAoJl8EN0yfDbZIgu1eQtvceEFQgWAoKFgGAhIFgG9ZaXdZeCNh1+5ykdhsc8IFfxlpdYOgKChYBgGdQMVKfklpkSYz5jvizMQFg6AoKFgGAhIFgGP0Tj6jBEY+kICBYCgoWAYCEgWAgIFgKChYBgISBYCAgWAoKFgGAhIFgICBYCgoWAYCEgWBZ9faDvkr61sSPovTt1Gxe6pBWo4l8YLAQECwHBQkCwEBAsBAQLAcFCQLAQECz/AG9mLSvkAo3WAAAAAElFTkSuQmCC\n",
+      "text/plain": [
+       "<Figure size 129.6x172.8 with 1 Axes>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "plot_mnist([X[1]], [y[1]], w, h, n_row=1, n_col=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 156,
+   "id": "b617356b-b77a-410f-8b4f-f83160f70072",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "image/png": "iVBORw0KGgoAAAANSUhEUgAAAJAAAACgCAYAAADjPOUVAAAAOXRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjUuMSwgaHR0cHM6Ly9tYXRwbG90bGliLm9yZy/YYfK9AAAACXBIWXMAAAsTAAALEwEAmpwYAAADsUlEQVR4nO3dsW4cRRzH8f8gKuAVIhqQeAlkPwBUpIUI8SBnC/EYFKQONSltIdHxBlDQp6BIChqGxoh4vSG791t7d+3PR3Jxp7vT6PTVeDxzt26994JjvbP2ANg3AREREBEBEREQEQERERARAb2mtdZba69aa99NfPw3rbWXV8/76LbHt0XNRuJ/Wmu9qj7uvf92dfvTqvpp8LD3q+px7/3HNz3vITED/Y/e+8+99w/+/amqz6rqZVU9X3lomyGgeZ5U1bPe+6u1B7IV7649gL1orb1XVY+r6vO1x7IlZqDpvqiqF1V1ufZAtkRA0z2pqqfdXx3XCGiC1tqjqjqtqqcrD2VzBDTNl1X1S+/997UHsjUCmuarqvph7UFskYCu+6uqfm2tffv6nb33T3rv3w8f3Fr7urX259Xz/r6bIW6LnWgiZiAiAiIyayf66tCQB6r33ob3mYGICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICIuEbiCk5PT2/cd3Z29tbHbJEZiIiAiAiIiICIzLpCmcu7LGPKe97ajSuprM7lXVicgIgIiIiAiNiJXtiUXeYx5+fnyw/mDpiBiAiIiICI2EicYcr65uTk5K2vc3l583/W7eH03UYiixMQEQERERCRB7GROGWBesxi+FgXFxe39tp3zQxEREBEBERklY3Eu14DHLOeGdvsGxv38L6x9dbhcLh2e4ufNpzCRiKLExARAREREJHNnMYPF59ji9FjT6yHC90pi+FjTXmdPZy8j7GIZnECIiIgIps5TJ2yTtmi4XpmbNNyr9+4mMIMRERARAREREBENrOI3qvhInrsFH/KV5v3ygxEREBEBEREQEQsokN7PVlfihmIiICICIiINVBoePo+tpF4n5mBiAiIiICICIiIRfQMUzYN9/JR3KWYgYgIiIiAiFgDLcwaCGYQEBEBEREQEYvoGcY2Eoen7xbRMIOAiAiIiICICIiIgIgIiIiAiGzmQuN7MPZeDTcS7/NXnV1onMUJiIiAiAiIiICICIiIgIgIiIhPJL7Bfd4QXJIZiIiAiAiIiICIOI2fYcp7NXaRzfuyIHcaz+IERERARGwkzjD277sPh8O1277aDDMIiIiAiAiIiI1EJrORyOIERERARAREREBEBEREQEQERGTuafyLqvrjNgbC5n04duesnWgY8iuMiICICIiIgIgIiIiAiAiIiICICIjIP/rN4D98NExZAAAAAElFTkSuQmCC\n",
+      "text/plain": [
+       "<Figure size 129.6x172.8 with 1 Axes>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "plot_mnist([X[4200]], [y[4200]], w, h, n_row=1, n_col=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 157,
+   "id": "c6ce8d83-ecf6-48b0-b943-41c668bad4d8",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "image/png": "iVBORw0KGgoAAAANSUhEUgAAAJAAAACgCAYAAADjPOUVAAAAOXRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjUuMSwgaHR0cHM6Ly9tYXRwbG90bGliLm9yZy/YYfK9AAAACXBIWXMAAAsTAAALEwEAmpwYAAAD3klEQVR4nO3dsU7VYBjG8ec1bhKjRuNidFEZnVy9By+BeAdOJg5AjJegm4OTM2y4u5h4By46mSjGQQcXXwcPAUuBtk9P+/X0/0tYsEc+kn8+P19OS2SmgK7Ojb0ATBsBwUJAsBAQLAQECwHBQkCwENAREZER8Ssinje8/lFE/Fy87vay11ciAjruXmY+laSIuBsROxHxNSK+R8ReRKwfXJiZrzJzbbyljo+ATndJ0q6kdUnXJb2XtDPmgkoT/CjjUESkpDuZ+fGEP78iaV/S1czcb/q6VcYO1M4DSV+OxjN3BNRQRNyQ9ELS47HXUhICaiAirkl6K+llZr4Zez0lIaAzRMRl/YtnNzMb/fd+TgjoFBFxUdKepHeZ+WTs9ZSIgE73UNJ9SRuLgeHBx82xF1YKAvrfb0kfIuKZJGXm68yMzLyQmWtHPj5LUkRsRMSPxev+jLfs8TAHgoUdCBYCguV8m4sXI3vMVGZG9XPsQLAQECwEBAsBwUJAsBAQLAQECwHBQkCwEBAsBAQLAcFCQLAQECwEBAsBwdLqDWXLtLW11el1m5ubvXz97e3tM//e6jVNdf3epoAdCBYCgoWAYCEgWFrdWLjMuzK4wfFsEcduihgUd2WgdwQECwHBUswgsauuw72+9DXIbKLunFj9/oceWrIDwUJAsBAQLAQESzGDxLnra5C6zGEjg0T0joBgISBYCAiWyU+iV0X18Fs3UR5y6t0UOxAsBAQLAcFCQLAQECwEBAsBwUJAsDBILER1cFji0LAOOxAsBAQLAcHCGagQXc88Y9/WxA4ECwHBQkCwEBAsHKIH0NeQcOznA9VhB4KFgGAhIFg4A/Wsr7spSjzv1GEHgoWAYCEgWAgIFg7RplUeEjbBDgQLAcFCQLAQECwcok/Q5/N5xn6a/DKxA8FCQLAQECyzPAMt8/mDdbfZrNKZp4odCBYCgoWAYCEgWFbuEN3kwNrns3em+lP0vrADwUJAsBAQLJM6Aw35C0jmNhDsih0IFgKChYBgISBYij1ED/0b++Y+EOyKHQgWAoKFgGAp5gw01V82MnfsQLAQECwEBAsBwRKZ2fziiOYXt9RmHXNV9w6BIR/gmZnHXsgOBAsBwUJAsBAQLMUcoquGfvvonCbfHKJRDAKChYBgKfYMNBVDDkDHvtWIMxB6R0CwEBAsBARLMW9pnaq53w7EDgQLAcFCQLAQECwEBAsBwUJAsBAQLAQECwHBQkCwEBAsBAQLAcFCQLAQECwEBEvbdyR+k/RpGQtB8W7VfbLVfWFAFf+EwUJAsBAQLAQECwHBQkCwEBAsBAQLAcHyF1255AQyscQsAAAAAElFTkSuQmCC\n",
+      "text/plain": [
+       "<Figure size 129.6x172.8 with 1 Axes>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "plot_mnist([X[220]], [y[220]], w, h, n_row=1, n_col=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 168,
+   "id": "ef275694-aaad-475d-b875-afb70181fce4",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "image/png": "iVBORw0KGgoAAAANSUhEUgAAAJAAAACgCAYAAADjPOUVAAAAOXRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjUuMSwgaHR0cHM6Ly9tYXRwbG90bGliLm9yZy/YYfK9AAAACXBIWXMAAAsTAAALEwEAmpwYAAAD4klEQVR4nO3dPWsUURiG4edVo2kV0VIQBbGw9j9YiD9B7a1sJUlhLaS2txZ/g4VWfhRBFMHGQiwjRPx4LTZgnKxhdp6ZPWdn7qvLkpDDcnP25MyZSWSmgK6OlR4AVhsBwUJAsBAQLAQECwHBQkCwENABEZER8S0iHrb8/rsRsbv/c5eGHl+Ngo3EvyIiJV3OzA/7X5+V9FTSFUnHJe1Iup+Zz4/6uSk5UXoAlduVdEfSe0kp6aakZxFxLjN/Fh1ZJfgIO0Jm7mXmu8z8LSkk/ZJ0WtKZsiOrBzNQCxHxRrOPsTVJjzPzS+EhVYOAWsjMaxGxLumWpJOlx1MTAmopM/ckPYmInYh4lZmvS4+pBqyBFrcm6WLpQdSCGegIEXFds/fopWZ/xt+TdF7Si5LjqgkBHe2UpG3NZpwfkt5KupGZn4uOqiJsJB4QEXuSvkvazswHLb7/tqRHktYlXc3MjwMPsToEBAuLaFgICJaFFtH7Fw0xUZkZzdeYgWAhIFgICBYCgoWAYCEgWAgIFgKChYBgISBYCAgWAoKFgGAhIFgICBYCgoWAYCEgWAgIFgKChYBg4dbm/9jc3Dz02sbGxtJ+/9bW1qHX5o2pNGYgWAgIFgKCZRJroObaYZlrma7ajrH0uogZCBYCgoWAYCEgWBZ6QtkqPN6l9AbgskUceuLKYHi8C3pHQLAQECwEBMskdqK7mHc1vKsxL+KZgWAhIFgICJbRbSSugq7/XqL0KUU2EtE7AoKFgGAhIFgICBYCgoWAYCEgWNhIXIK+/i/tMk8fzsNGInpHQLAQECwEBAsnEhcwtVuG2mAGgoWAYCEgWCaxBlqF5wM1TxuWfu5PW8xAsBAQLAQECwHBMrpFdF9XvodU+vacPjEDwUJAsBAQLAQEy+iOtK7CInqe0sdV2+BIK3pHQLAQECyj20ict5ZobtINuWk3tVOLzECwEBAsBAQLAcEyuo3EGrV5j9lIxCQRECwEBAsBwUJAsBAQLAQECwHBMrqr8cu2CvfdD4kZCBYCgoWAYKl2DdT2Iu8yL0JO7bRhG8xAsBAQLAQECwHBUs0iuustyUPdojPk4ngVTh+2xQwECwHBQkCwEBAs1dzWs6rP9Wka0wM0m7itB70jIFgICJZqNhKbm2s1Xvke8/qmK2YgWAgIFgKChYBgqWYR3dR2cdpmYT1v8dv19+FfzECwEBAsBARLNRdTUT8upqJ3BAQLAcFCQLAQECwEBAsBwUJAsBAQLAQECwHBQkCwEBAsi55I/Crp0xADQfUuzHtxoeMcQBMfYbAQECwEBAsBwUJAsBAQLAQECwHBQkCw/AECfu+qS5Xh6wAAAABJRU5ErkJggg==\n",
+      "text/plain": [
+       "<Figure size 129.6x172.8 with 1 Axes>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "plot_mnist([X[7]], [y[7]], w, h, n_row=1, n_col=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 160,
+   "id": "2276c42f-e1f1-40d5-90bf-b85cdb5dcee4",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "image/png": "iVBORw0KGgoAAAANSUhEUgAAAJAAAACgCAYAAADjPOUVAAAAOXRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjUuMSwgaHR0cHM6Ly9tYXRwbG90bGliLm9yZy/YYfK9AAAACXBIWXMAAAsTAAALEwEAmpwYAAADoklEQVR4nO3dsWpkVRzH8f9fLSxs1hewsVdBbFews09aFa1EH0C2FLG3EAv3BRLxNaxsBB/AfotVtNDCY5OF7M0QJ/klc8/MfD7d3N3AYfhy8ufcuZMeYxTc1gtrL4D9JiAiAiIiICICIiIgIgIiIqBLunt091/d/dWW///j7v7z4udev+/1zUhAV70xxni0vNjdH1yE8smza2OMx2OMV3a7vLkIaAvd/aCqvqiqX9dey2wEtJ2vq+qbqnqy9kJmI6D/0d3vVNXbVfXd2muZkYCu0d0vVtW3VfX5GOPftdczIwFd79Oq+mWM8dPaC5nVS2svYHLvVdXD7n7/4vWrVfVWd785xvhsxXVNQ0DX+7CqXr70+seq+qGqHq+ymgkJ6BpjjKeXX3f3P1X1xxjj93VWNB8z0PP+rqqfu/vLTf84xnh3jPH9s9fd/VF3P734uaMcsttHWknYgYgIiMiNhuju9vvuiI0xennNDkREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERMSjzZM6OTm5cu3s7OzKte4rD0rslB2IiICICIjINDPQ8nf++fn5SiuZ14zviR2IiICICIiIgIisMkRvOiQzRD9vm/doBnYgIgIiIiAiAiKyyhC96a7ysQ/NS5sG5hnfIzsQEQERERCRae7GH7tNc+GSGYiDIyAiAiIiICKG6Elsc6fdEM3BERARARHZyQw04yfpuBt2ICICIiIgIgIiMs0QPeMh2X3Z5s77vrADEREQEQERcTP1jm3zSPI2M+Hp6emdrek+2YGICIiIgIgIiMhRDtG3/e6d236q4DaHpPtysGoHIiIgIgIiIiAi0wzR+3CHetNgu7y2zfA7xrizNa3NDkREQEQERGQnM9DyzvKuv0T7NnPKXTrkx5rsQEQERERARAREZJWDxG0O5A7JIT/WZAciIiAiAiIyzc3UY7cvj/Es2YGICIiIgIgIiIiAiAiIiICICIiIg8RJLG+47svNVTsQEQERERARAREREBEBEREQEQERERARJ9GTcBLNURIQEQERERARAREREBEBEREQEQeJO7A8FDykL920AxEREBEBEemb/OGP7j6cvxLCjY0xennNDkREQEQERERARAREREBEBEREQEQERERARAREREBEBETkpp9IfFJVv93HQpjea5su3ujjHLDkVxgRAREREBEBEREQEQERERARAREREJH/ALlmpRdg2YSVAAAAAElFTkSuQmCC\n",
+      "text/plain": [
+       "<Figure size 129.6x172.8 with 1 Axes>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "plot_mnist([X[2]], [y[2]], w, h, n_row=1, n_col=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 173,
+   "id": "f975ae01-2e1f-42df-991a-4b4812e76261",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "image/png": "iVBORw0KGgoAAAANSUhEUgAAAJAAAACgCAYAAADjPOUVAAAAOXRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjUuMSwgaHR0cHM6Ly9tYXRwbG90bGliLm9yZy/YYfK9AAAACXBIWXMAAAsTAAALEwEAmpwYAAADk0lEQVR4nO3dPYpkZRTH4XNEQVdg6AgKfgSzBDdg2p2L5q7ATGPBVWg3GM0KZgsGJjJgoBgYiKj4EbwGtjhUF9O37/+Wt6ru84RFdXOn+fHWO+d+VI8xCuZ6bu0D4LQJiIiAiAiIiICICIiIgIgI6CndPbr71+7+ZOL73+/uX25+7rVDH98xaoPE/3T3qKrXxxjf7Lz2W1X9+4f6fIzxwV0/txXPr30AJ+LhFuOYwkcYEQFN87i7f+juL7v7wdoHc0wEdLd3qupBVb1RVd9X1aPu9tF/Q0B3GGM8HmP8Ocb4qao+rKpXq+rNdY/qeAjo/kZV9doHcSwsxc/Q3W9X1QtV9VVVvVRVH1fVd1X19ZrHdUysQM/2clV9UVU/V9WT+mcv9O4Y4681D+qYGCQ+pbt/r6o/quqzMcZHE97/XlV9WlUvVtVbY4wnBz7EoyMgIj7CiAiIyL3+F3Zz0pCNGmPcGl9YgYgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIh4PtDCrq6u7nzPxcXFrN99eXl567Xr6+tZv2spViAiAiIiICICInKvJ5Sd8+Nddje2+za6cze/S+le9+GwHu/C4gREREBEBERkk5PofZvhKRPkuXanxfsmyqfKCkREQEQERGQTe6Dd/c05nQ1fmxWIiICICIiIgIhs4mz8Ut+JtvbZ8LU5G8/iBEREQEQ2MUjcHfZNGSSe0wnPQ7ICEREQEQERERCRTQwSdzfNU64+3PrQcB+DRBYnICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIisokrEndN+Te7IvE2VySyOAERERARARHZxL3xc8x9ptDWHsRpBSIiICICIrLJQeK+W5sP+W2E5/JlKwaJLE5ARAREREBENrmJ3mfuJnrONx3uGyyewsbaJprFCYiIgIjYAy1s7knYU7gC0h6IxQmIiICICIiIKxIXtm8gOGfYeCqsQEQERERARARExCT6f3Au9+KbRLM4AREREBEBEREQEQERERARARFxNn5hh7zH/hhZgYgIiIiAiNgDreAUbmOeygpEREBEBEREQERckchkrkhkcQIiIiAiAiIiICICIiIgIgIict+z8T9W1beHOBCO3iv7XrzXJBp2+QgjIiAiAiIiICICIiIgIgIiIiAiAiLyN23F1WgkpJH8AAAAAElFTkSuQmCC\n",
+      "text/plain": [
+       "<Figure size 129.6x172.8 with 1 Axes>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "plot_mnist([X[100]], [y[100]], w, h, n_row=1, n_col=1)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "f7ae727d-b802-4844-9adc-e514d9fb383a",
+   "metadata": {},
+   "source": [
+    "<b>Ex. 4.</b> Please divide the dataset into learner (70%) and training."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 174,
+   "id": "a1553a36-cb4c-4177-a2f0-f5ae4f0a9914",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4b9bf898-13cb-4654-94d5-59c8851cae3f",
+   "metadata": {},
+   "source": [
+    "<b>Ex. 5.</b> Create an instance of the classifier, then train and predict for test data."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 175,
+   "id": "2a4f5c4e-c3e0-492a-aed1-d16fb9d861c5",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "DEPTH = 10"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 176,
+   "id": "b4d9e81a-7c3b-4eaa-a3d5-4c33c2a6b5c7",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([3, 1, 1, ..., 2, 1, 9], dtype=uint8)"
+      ]
+     },
+     "execution_count": 176,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "clf = tree.DecisionTreeClassifier(max_depth=DEPTH)\n",
+    "clf.fit(X_train, y_train)\n",
+    "\n",
+    "y_pred = clf.predict(X_test)\n",
+    "y_pred"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "d65544da-4cd6-4cc8-88de-71d5a3631b1a",
+   "metadata": {},
+   "source": [
+    "<b>Ex. 5.</b> Please provide F1 result, confusion matrix and classification report."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 177,
+   "id": "e2a4f22b-6928-435c-923a-e4dd5377101d",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([0.90525146, 0.94047048, 0.77883829, 0.76079347, 0.81771537,\n",
+       "       0.74960827, 0.85609481, 0.87316277, 0.76788321, 0.77324452])"
+      ]
+     },
+     "execution_count": 177,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "f1_score(y_test, y_pred, average=None)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 179,
+   "id": "b967fab5-1d99-4ab4-b5b8-2d5682281fc5",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([[1629,    0,   34,   15,   12,   32,   29,    6,   35,   16],\n",
+       "       [   0, 1959,   37,   24,   14,   21,    7,   11,   43,    2],\n",
+       "       [  32,   17, 1428,   51,   53,   19,   66,   32,   68,   16],\n",
+       "       [  12,    5,   70, 1304,   21,  161,   25,   25,   48,   74],\n",
+       "       [  17,    6,   42,   27, 1514,   29,   33,   15,   25,  115],\n",
+       "       [  33,    7,   27,  101,   40, 1196,   65,    7,   38,   29],\n",
+       "       [  29,    5,   37,   11,   35,   48, 1517,    5,   46,   10],\n",
+       "       [  10,   10,   66,   23,   45,   14,    0, 1604,   18,  116],\n",
+       "       [  17,   31,  109,   79,   35,   56,   50,    8, 1315,   62],\n",
+       "       [  12,    8,   35,   48,  111,   72,    9,   55,   27, 1393]])"
+      ]
+     },
+     "execution_count": 179,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "confusion_matrix(y_test, y_pred)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 178,
+   "id": "2d10d440-8c44-4a04-9a07-7fbdeb472db1",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "              precision    recall  f1-score   support\n",
+      "\n",
+      "           0       0.91      0.90      0.91      1808\n",
+      "           1       0.96      0.92      0.94      2118\n",
+      "           2       0.76      0.80      0.78      1782\n",
+      "           3       0.77      0.75      0.76      1745\n",
+      "           4       0.81      0.83      0.82      1823\n",
+      "           5       0.73      0.78      0.75      1543\n",
+      "           6       0.84      0.87      0.86      1743\n",
+      "           7       0.91      0.84      0.87      1906\n",
+      "           8       0.79      0.75      0.77      1762\n",
+      "           9       0.76      0.79      0.77      1770\n",
+      "\n",
+      "    accuracy                           0.83     18000\n",
+      "   macro avg       0.82      0.82      0.82     18000\n",
+      "weighted avg       0.83      0.83      0.83     18000\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(sklearn.metrics.classification_report(y_test, y_pred))"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.12"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
